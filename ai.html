@@ -1,0 +1,567 @@
+<html>
+    <head><title>Ai</title></head>
+    <body onload="doatload()" style="background-color:black;">
+        <canvas id="c1" width="500" height="502" style="border:3px solid white;position:absolute;left:400px;top:100px"></canvas>
+        <div id="disp" style="position:absolute;top:200px;left:700px;"></div>
+        <div id="rand" style="position:absolute;top:400px;left:700px;"></div>
+        <img src="pacclosed.png" id="close" style="display:none" />
+        <img src="pacopen.png" id="open" style="display:none" />
+    </body>
+    <script>
+        var c = document.getElementById("c1");
+        var ctx = c.getContext("2d");
+        var player = {};
+        var enemy = [];
+        var tempstorage = [];
+        var object = [];
+        var candy = [];
+        var candycount = 0;
+        var chasefactor = 1.5;
+        var gameover = 0;
+        var timer = 0;
+        var img0 = document.getElementById("close");
+        var img1 = document.getElementById("open");
+        var velx = 0, vely = 0;
+
+        function doatload() {
+            resetstuff(0);
+            document.body.addEventListener("keydown", changevel, false);
+            draw();
+        }
+
+        function resetstuff(i) {
+            player = { left: 11, top: 41, rad: 10, theta: 2 * Math.PI, prevleft: 35, prevtop: 41, color: "yellow", vx: 0, vy: 0, time: 0 };
+            enemy = [{ left: 263, top: 469, rad: 10, prevleft: 0, prevtop: 0, color: "blue", vx: 0, vy: -2, gl: 0, gr: 0, gt: 0, gb: 0 },
+                     { left: 263, top: 469, rad: 10, prevleft: 0, prevtop: 0, color: "red", vx: 0, vy: -2, gl: 0, gr: 0, gt: 0, gb: 0 },
+                     { left: 263, top: 469, rad: 10, prevleft: 0, prevtop: 0, color: "green", vx: 0, vy: -2, gl: 0, gr: 0, gt: 0, gb: 0 },
+                     { left: 263, top: 469, rad: 10, prevleft: 0, prevtop: 0, color: "hotpink", vx: 0, vy: -2, gl: 0, gr: 0, gt: 0, gb: 0 }];
+            tempstorage = [{}, {}, {}, {}];
+            object = [{ left: 0, top: -2, width: 500, height: 2 },         // horizontal bars start here
+                      { left: 0, top: 502, width: 500, height: 2 },         // horizontal bars end here
+
+                      { left: -2, top: 0, width: 2, height: 500 },          // vertical bars start here
+                      { left: 502, top: 0, width: 2, height: 502 },          // vertical bars end here
+
+                      { left: 22, top: 22, width: 2, height: 44 }, { left: 22, top: 88, width: 2, height: 458 - 66 },
+                      { left: 46, top: 22, width: 2, height: 88 }, { left: 46, top: 132, width: 2, height: 370 - 22 },
+                      { left: 46 + 24, top: 22, width: 2, height: 132 }, { left: 46 + 24, top: 176, width: 2, height: 326 - 22 },
+                      { left: 46 + 48, top: 22, width: 2, height: 176 }, { left: 46 + 48, top: 220, width: 2, height: 282 - 22 },
+                      { left: 46 + 72, top: 22, width: 2, height: 220 }, { left: 46 + 72, top: 264, width: 2, height: 238 - 22 },
+                      { left: 46 + 96, top: 22, width: 2, height: 440 }, { left: 46 + 96, top: 484, width: 2, height: 18 },
+                      { left: 46 + 120, top: 22, width: 2, height: 396 }, { left: 46 + 120, top: 440, width: 2, height: 62 - 22 },
+                      { left: 46 + 144, top: 22, width: 2, height: 352 }, { left: 46 + 144, top: 396, width: 2, height: 106 - 22 },
+                      { left: 46 + 168, top: 22, width: 2, height: 308 }, { left: 46 + 168, top: 352, width: 2, height: 150 - 22 },
+                      { left: 46 + 192, top: 22, width: 2, height: 264 }, { left: 46 + 192, top: 308, width: 2, height: 194 - 22 },
+                      { left: 46 + 216, top: 0, width: 2, height: 458 }, { left: 46 + 216, top: 480, width: 2, height: 480 - 22 },  // middle one
+                      { left: 46 + 240, top: 22, width: 2, height: 264 }, { left: 46 + 240, top: 308, width: 2, height: 194 - 22 },
+                      { left: 46 + 264, top: 22, width: 2, height: 308 }, { left: 46 + 264, top: 352, width: 2, height: 150 - 22 },
+                      { left: 46 + 288, top: 22, width: 2, height: 352 }, { left: 46 + 288, top: 396, width: 2, height: 106 - 22 },
+                      { left: 46 + 312, top: 22, width: 2, height: 396 }, { left: 46 + 312, top: 440, width: 2, height: 62 - 22 },
+                      { left: 46 + 336, top: 22, width: 2, height: 440 }, { left: 46 + 336, top: 484, width: 2, height: 18 },
+                      { left: 46 + 360, top: 22, width: 2, height: 220 }, { left: 46 + 360, top: 264, width: 2, height: 238 - 22 },
+                      { left: 46 + 384, top: 22, width: 2, height: 176 }, { left: 46 + 384, top: 220, width: 2, height: 282 - 22 },
+                      { left: 46 + 408, top: 22, width: 2, height: 132 }, { left: 46 + 408, top: 176, width: 2, height: 326 - 22 },
+                      { left: 46 + 432, top: 22, width: 2, height: 88 }, { left: 46 + 432, top: 132, width: 2, height: 370 - 22 }];
+            velx = 0; vely = 0;
+            chasefactor += i;
+            candycount = 0;
+            gameover = 0;
+            timer = 0;
+            putcandy();
+        }
+
+        function putcandy() {
+            var counter = 0;
+            for (var i = 35; i < 490; i += 24) {
+                for (var j = 35; j < 490; j += 24) {
+                    candy[counter] = { left: i, top: j, active: 1 };
+                    candycount = candy.length;
+                    counter++;
+                }
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, 500, 502);
+
+            drawobjects();
+
+            drawcandy();
+
+            if (gameover == 0) {
+                addplayervel();
+
+                checkplayercollision();
+            }
+            if (player.theta > 0)
+                drawplayer();
+
+            if (gameover == 0 && (player.vx != 0 || player.vy != 0)) {
+                checkcollision();
+
+                addvel();
+            }
+
+            drawenemy();
+
+            checkcandy();
+
+            timer++;
+
+            requestAnimationFrame(draw);
+        }
+
+        function drawobjects() {
+            for (var i = 0; i < object.length; i++) {
+                ctx.beginPath();
+                ctx.fillStyle = "white";
+                ctx.fillRect(object[i].left, object[i].top, object[i].width, object[i].height);
+            }
+        }
+
+        function drawcandy() {
+            for (var i = 0; i < candy.length; i++) {
+                ctx.fillStyle = "yellow";
+                if (candy[i].active == 1)
+                    ctx.fillRect(candy[i].left, candy[i].top, 1, 1);
+            }
+        }
+
+        function drawplayer() {
+            ctx.beginPath();
+            ctx.fillStyle = player.color;
+            if (gameover == 0) {
+                //2//velx = player.left - player.prevleft;
+                //2//vely = player.top - player.prevtop;
+                //2//ctx.save();
+                //2//if (vely) {
+                //2//    ctx.translate(player.left, player.top);
+                //2//    ctx.rotate((Math.abs(vely) / vely) * (Math.PI / 2));
+                //2//}
+                //2//else if (velx) {
+                //2//    ctx.translate(player.left, player.top);
+                //2//    ctx.rotate((Math.PI / 2) - ((Math.abs(velx) / velx) * (Math.PI / 2)));
+                //2//}
+                if (timer - player.time > 10) {
+                    //1//player.theta = 2 * Math.PI;
+                    ctx.drawImage(img1, player.left - player.rad, player.top - player.rad, 20, 20);
+                }
+                else {
+                    //1//player.theta = 3 * Math.PI / 2;
+                    ctx.drawImage(img0, player.left - player.rad, player.top - player.rad, 20, 20);
+                }                
+            }
+            //1//ctx.arc(player.left, player.top, player.rad, 0, player.theta);
+            //1//ctx.fill();
+            if (gameover) {
+                player.theta -= (5 * Math.PI / 180);
+                ctx.arc(player.left, player.top, player.rad, 0, player.theta);
+                ctx.fill();
+            }
+            //2//ctx.restore();
+        }
+
+        function drawenemy() {
+            for (var i = 0; i < enemy.length; i++) {
+                ctx.beginPath();
+                ctx.fillStyle = enemy[i].color;
+                ctx.arc(enemy[i].left, enemy[i].top, enemy[i].rad, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+
+        function addplayervel() {
+            player.prevleft = player.left;
+            player.prevtop = player.top;
+            player.left += player.vx;
+            player.top += player.vy;
+        }
+
+        function addvel() {
+            for (var i = 0; i < enemy.length; i++) {
+                addenemyvel(i);
+            }
+        }
+
+        function addenemyvel(i) {
+                enemy[i].prevleft = enemy[i].left;
+                enemy[i].prevtop = enemy[i].top;
+                enemy[i].left += enemy[i].vx;
+                enemy[i].top += enemy[i].vy;
+        }
+
+        function calcchasefactor(i){
+            var lr = enemy[i].left - player.left;
+            var tb = enemy[i].top - player.top;
+            if (lr > 0) {
+                enemy[i].gl = chasefactor;
+                enemy[i].gr = -chasefactor;
+            }
+            else if (lr < 0) {
+                enemy[i].gl = -chasefactor;
+                enemy[i].gr = chasefactor;
+            }
+            else {
+                enemy[i].gl = 0;
+                enemy[i].gr = 0;
+            }
+            if (tb > 0) {
+                enemy[i].gt = chasefactor;
+                enemy[i].gb = -chasefactor;
+            }
+            else if (tb < 0) {
+                enemy[i].gt = -chasefactor;
+                enemy[i].gb = chasefactor;
+            }
+            else {
+                enemy[i].gt = 0;
+                enemy[i].gb = 0;
+            }
+        }
+
+        function checkcollision() {
+            for (var i = 0; i < enemy.length; i++) {
+                calcchasefactor(i);
+                var l = detectleftcollision(1, i); var r = detectrightcollision(1, i); var t = detecttopcollision(1, i); var b = detectbottomcollision(1, i);
+                if (enemy[i].vx == 0) {                                               // moving vertically
+                    if (enemy[i].vy > 0) {                                            // moving bottom
+                        if (l + r + b == 2) {
+                            if (l == 0)
+                                moveleft(i);
+                            else if (r == 0)
+                                moveright(i);
+                            else if (b == 0)
+                                movebottom(i);
+                            else
+                                erroroccured(i);
+                        }
+                        else if (l + r + b == 1) {
+                            if (l == 1) {
+                                var rand = Math.random();
+                                if (rand < (0.5 + enemy[i].gr / 5)) moveright(i);
+                                else movebottom(i);
+                            }
+                            else if (r == 1) {
+                                var rand = Math.random();
+                                if (rand < (0.5 + enemy[i].gl / 5)) moveleft(i);
+                                else movebottom(i);
+                            }
+                            else if (b == 1) {
+                                var rand = Math.random();
+                                if (rand < (0.5 + enemy[i].gl / 5)) moveleft(i);
+                                else moveright(i);
+                            }
+                            else erroroccured(i);
+                        }
+                        else if (l + r + b == 0) {
+                            var rand = Math.random();
+                            if (rand < (0.33 + enemy[i].gl / 5)) moveleft(i);
+                            else if (rand < (0.66 + enemy[i].gr / 5)) moveright(i);
+                            else movebottom(i);
+                        }
+                    }
+                    else if (enemy[i].vy < 0) {                                               // moving top
+                        if (l + r + t == 2) {
+                            if (l == 0) moveleft(i);
+                            else if (r == 0) moveright(i);
+                            else if (t == 0) movetop(i);
+                            else erroroccured(i);
+                        }
+                        else if (l + r + t == 1) {
+                            if (l == 1) {
+                                var rand = Math.random();
+                                if (rand < (0.5 + enemy[i].gr / 5)) moveright(i);
+                                else movetop(i);
+                            }
+                            else if (r == 1) {
+                                var rand = Math.random();
+                                if (rand < (0.5 + enemy[i].gl / 5)) moveleft(i);
+                                else movetop(i);
+                            }
+                            else if (t == 1) {
+                                var rand = Math.random();
+                                if (rand < (0.5 + enemy[i].gl / 5)) moveleft(i);
+                                else moveright(i);
+                            }
+                            else erroroccured(i);
+                        }
+                        else if (l + r + t == 0) {
+                            var rand = Math.random();
+                            if (rand < (0.33 + enemy[i].gt / 5)) movetop(i);
+                            else if (rand < (0.66 + enemy[i].gr / 5)) moveright(i);
+                            else moveleft(i);
+                        }
+                    }
+                }
+                else if (enemy[i].vy == 0) {                              // if movinng horizontally
+                    if (enemy[i].vx < 0) {                                // if moving left
+                        if (l + b + t == 2) {
+                            if (l == 0) moveleft(i);
+                            else if (b == 0) movebottom(i);
+                            else if (t == 0) movetop(i);
+                            else erroroccured(i);
+                        }
+                        else if (l + b + t == 1) {
+                            if (l == 1) {
+                                var rand = Math.random();
+                                if (rand < (0.5 + enemy[i].gb / 5)) movebottom(i);
+                                else movetop(i);
+                            }
+                            else if (b == 1) {
+                                var rand = Math.random();
+                                if (rand < (0.5 + enemy[i].gl / 5)) moveleft(i);
+                                else movetop(i);
+                            }
+                            else if (t == 1) {
+                                var rand = Math.random();
+                                if (rand < (0.5 + enemy[i].gl / 5)) moveleft(i);
+                                else movebottom(i);
+                            }
+                            else erroroccured(i);
+                        }
+                        else if (l + b + t == 0) {
+                            var rand = Math.random();
+                            if (rand < (0.33 + enemy[i].gt / 5)) movetop(i);
+                            else if (rand < (0.66 + enemy[i].gb / 5)) movebottom(i);
+                            else moveleft(i);
+                        }
+                    }
+                    else if (enemy[i].vx > 0) {                           // if moving right
+                        if (r + b + t == 2) {
+                            if (r == 0) moveright(i);
+                            else if (b == 0) movebottom(i);
+                            else if (t == 0) movetop(i);
+                            else erroroccured(i);
+                        }
+                        else if (r + b + t == 1) {
+                            if (r == 1) {
+                                var rand = Math.random();
+                                if (rand < (0.5 + enemy[i].gb / 5)) movebottom(i);
+                                else movetop(i);
+                            }
+                            else if (b == 1) {
+                                var rand = Math.random();
+                                if (rand < (0.5 + enemy[i].gr / 5)) moveright(i);
+                                else movetop(i);
+                            }
+                            else if (t == 1) {
+                                var rand = Math.random();
+                                if (rand < (0.5 + enemy[i].gr / 5)) moveright(i);
+                                else movebottom(i);
+                            }
+                            else erroroccured(i);
+                        }
+                        else if (r + b + t == 0) {
+                            var rand = Math.random();
+                            if (rand < (0.33 + enemy[i].gr / 5)) moveright(i);
+                            else if (rand < (0.66 + enemy[i].gb / 5)) movebottom(i);
+                            else movetop(i);
+                        }
+                    }
+                }
+            }
+        }
+
+        function detectleftcollision(factor,x) {
+            storecontents(x);
+            if (factor == 1) {
+                moveleft(x);     // putting factor = 0 will change direction only when there is coll. by enemys's self velocity and not temp added velocity like in this statement
+            }
+            addenemyvel(x);
+            for (var i = 0; i < object.length; i++) {
+                if ((enemy[x].top + enemy[x].rad) >= (object[i].top) && (enemy[x].top - enemy[x].rad) <= (object[i].top + object[i].height)) {
+                    if ((enemy[x].prevleft - enemy[x].rad) >= (object[i].left + object[i].width) && (enemy[x].left - enemy[x].rad) <= (object[i].left + object[i].width)) {
+                        enemy[x].left = object[i].left + object[i].width + enemy[x].rad + 1;
+                        retrievecontents(x);
+                        return 1;
+                    }
+                }
+            }
+            retrievecontents(x);
+            return 0;
+        }
+
+        function detectrightcollision(factor,x) {
+            storecontents(x);
+            if (factor == 1) {
+                moveright(x);     // putting factor = 0 will change direction only when there is coll. by enemys's self velocity and not temp added velocity like in this statement
+            }
+            addenemyvel(x);
+            for (var i = 0; i < object.length; i++) {
+                if ((enemy[x].top + enemy[x].rad) >= (object[i].top) && (enemy[x].top - enemy[x].rad) <= (object[i].top + object[i].height)) {
+                    if ((enemy[x].prevleft + enemy[x].rad) <= object[i].left && (enemy[x].left + enemy[x].rad) >= object[i].left) {
+                        enemy[x].left = object[i].left - enemy[x].rad - 1;
+                        retrievecontents(x);
+                        return 1;
+                    }
+                }
+            }
+            retrievecontents(x);
+            return 0;
+        }
+
+        function detecttopcollision(factor,x) {
+            storecontents(x);
+            if (factor == 1) {
+                movetop(x);     // putting factor = 0 will change direction only when there is coll. by enemys's self velocity and not temp added velocity like in this statement
+            }
+            addenemyvel(x);
+            for (var i = 0; i < object.length; i++) {
+                if ((enemy[x].left + enemy[x].rad) >= (object[i].left) && (enemy[x].left - enemy[x].rad) <= (object[i].left + object[i].width)) {
+                    if ((enemy[x].prevtop - enemy[x].rad) >= (object[i].top + object[i].height) && (enemy[x].top - enemy[x].rad) <= (object[i].top + object[i].height)) {
+                        enemy[x].top = object[i].top + object[i].height + enemy[x].rad + 1;
+                        retrievecontents(x);
+                        return 1;
+                    }
+                }
+            }
+            retrievecontents(x);
+            return 0;
+        }
+
+        function detectbottomcollision(factor,x) {
+            storecontents(x);
+            if (factor == 1) {
+                movebottom(x);   // putting factor = 0 will change direction only when there is coll. by enemys's self velocity and not temp added velocity like in this statement
+            }
+            addenemyvel(x);
+            for (var i = 0; i < object.length; i++) {
+                if ((enemy[x].left + enemy[x].rad) >= (object[i].left) && (enemy[x].left - enemy[x].rad) <= (object[i].left + object[i].width)) {
+                    if ((enemy[x].prevtop + enemy[x].rad) <= object[i].top && (enemy[x].top + enemy[x].rad) >= object[i].top) {
+                        enemy[x].top = object[i].top - enemy[x].rad - 1;
+                        retrievecontents(x);
+                        return 1;
+                    }
+                }
+            }
+            retrievecontents(x);
+            return 0;
+        }
+
+        function checkplayercollision() {
+            //left
+            for (var i = 0; i < object.length; i++) {
+                if ((player.top + player.rad) >= (object[i].top) && (player.top - player.rad) <= (object[i].top + object[i].height)) {
+                    if ((player.prevleft - player.rad) >= (object[i].left + object[i].width) && (player.left - player.rad) <= (object[i].left + object[i].width)) {
+                        player.left = object[i].left + object[i].width + player.rad + 1;
+                        //player.vx = 0;
+                    }
+                }
+            }
+            //right
+            for (var i = 0; i < object.length; i++) {
+                if ((player.top + player.rad) >= (object[i].top) && (player.top - player.rad) <= (object[i].top + object[i].height)) {
+                    if ((player.prevleft + player.rad) <= object[i].left && (player.left + player.rad) >= object[i].left) {
+                        player.left = object[i].left - player.rad - 1;
+                        //player.vx = 0;
+                    }
+                }
+            }
+            //top
+            for (var i = 0; i < object.length; i++) {
+                if ((player.left + player.rad) >= (object[i].left) && (player.left - player.rad) <= (object[i].left + object[i].width)) {
+                    if ((player.prevtop - player.rad) >= (object[i].top + object[i].height) && (player.top - player.rad) <= (object[i].top + object[i].height)) {
+                        player.top = object[i].top + object[i].height + player.rad + 1;
+                        //player.vy = 0;
+                    }
+                }
+            }
+            //bottom
+            for (var i = 0; i < object.length; i++) {
+                if ((player.left + player.rad) >= (object[i].left) && (player.left - player.rad) <= (object[i].left + object[i].width)) {
+                    if ((player.prevtop + player.rad) <= object[i].top && (player.top + player.rad) >= object[i].top) {
+                        player.top = object[i].top - player.rad - 1;
+                        //player.vy = 0;
+                    }
+                }
+            }
+            //enemy
+            for (var i = 0; i < enemy.length; i++) {
+                if (Math.sqrt((player.left - enemy[i].left) * (player.left - enemy[i].left) + (player.top - enemy[i].top) * (player.top - enemy[i].top)) < (player.rad + enemy[i].rad)) {
+                    over();
+                }
+            }
+        }
+
+        function erroroccured(i) {
+            document.getElementById("disp").innerHTML = "error left:" + enemy[i].left + " top:" + enemy[i].top + " vx:" + enemy[i].vx + " vy:" + enemy[i].vy;
+        }
+
+        function storecontents(i) {
+            tempstorage[i].left = enemy[i].left;
+            tempstorage[i].top = enemy[i].top;
+            tempstorage[i].rad = enemy[i].rad;
+            tempstorage[i].prevleft = enemy[i].prevleft;
+            tempstorage[i].prevtop = enemy[i].prevtop;
+            tempstorage[i].color = enemy[i].color;
+            tempstorage[i].vx = enemy[i].vx;
+            tempstorage[i].vy = enemy[i].vy;
+            tempstorage[i].collision = enemy[i].collision;
+        }
+
+        function retrievecontents(i) {
+            enemy[i].left = tempstorage[i].left;
+            enemy[i].top = tempstorage[i].top;
+            enemy[i].rad = tempstorage[i].rad;
+            enemy[i].prevleft = tempstorage[i].prevleft;
+            enemy[i].prevtop = tempstorage[i].prevtop;
+            enemy[i].color = tempstorage[i].color;
+            enemy[i].vx = tempstorage[i].vx;
+            enemy[i].vy = tempstorage[i].vy;
+            enemy[i].collision = tempstorage[i].collision;
+        }
+
+        function moveleft(i) {
+            enemy[i].vx = -2;
+            enemy[i].vy = 0;
+        }
+        function moveright(i) {
+            enemy[i].vx = 2;
+            enemy[i].vy = 0;
+        }
+        function movetop(i) {
+            enemy[i].vx = 0;
+            enemy[i].vy = -2;
+        }
+        function movebottom(i) {
+            enemy[i].vx = 0;
+            enemy[i].vy = 2;
+        }
+
+        function over() {
+            gameover = 1;
+        }
+
+        function checkcandy() {
+            for (var i = 0; i < candy.length; i++) {
+                if (player.left == candy[i].left && player.top == candy[i].top && candy[i].active == 1) {
+                    player.time = timer;
+                    candy[i].active = 0;
+                    candycount--;
+                    if (candycount <= 0)
+                        resetstuff(1);
+                }
+            }
+        }
+
+        function changevel(event) {
+            if (event.keyCode == "87") {
+                //player.vx = 0;
+                player.vy = -2;
+            }
+            else if (event.keyCode == "65") {
+                player.vx = -2;
+                //player.vy = 0;
+            }
+            else if (event.keyCode == "83") {
+                //player.vx = 0;
+                player.vy = 2;
+            }
+            else if (event.keyCode == "68") {
+                player.vx = 2;
+                //player.vy = 0;
+            }
+        }
+
+    </script>
+</html>
